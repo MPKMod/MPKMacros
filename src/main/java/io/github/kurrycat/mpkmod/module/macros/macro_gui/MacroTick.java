@@ -1,0 +1,192 @@
+package io.github.kurrycat.mpkmod.module.macros.macro_gui;
+
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.InputConstants;
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.Keyboard;
+import io.github.kurrycat.mpkmod.gui.Theme;
+import io.github.kurrycat.mpkmod.gui.components.*;
+import io.github.kurrycat.mpkmod.gui.interfaces.MouseInputListener;
+import io.github.kurrycat.mpkmod.module.macros.Macro;
+import io.github.kurrycat.mpkmod.module.macros.TickInput;
+import io.github.kurrycat.mpkmod.module.macros.util.LinkedList;
+import io.github.kurrycat.mpkmod.util.ItrUtil;
+import io.github.kurrycat.mpkmod.util.Mouse;
+import io.github.kurrycat.mpkmod.util.Vector2D;
+
+import java.util.ArrayList;
+
+public class MacroTick extends ScrollableListItem<MacroTick> {
+    public Macro.Node tick;
+    public LinkedList<MacroTick>.Node node;
+    protected boolean collapsed = true;
+    private static final int HEIGHT = 24;
+
+    private ArrayList<Component> editButtons = new ArrayList<>();
+
+    private Button delete;
+
+    public MacroTick(MacroTickList parent, Macro.Node tick) {
+        super(parent);
+        this.tick = tick;
+
+        if (tick == null) return;
+
+        Div contentDiv = new Div(new Vector2D(1, 0), new Vector2D(-2, HEIGHT - 2));
+        contentDiv.borderColor = Theme.lightEdge;
+        addChild(contentDiv, PERCENT.NONE, Anchor.CENTER_LEFT);
+
+        Div buttonDiv = new Div(new Vector2D(0, 0), new Vector2D(0.6D, 1));
+        contentDiv.addChild(buttonDiv, PERCENT.SIZE, Anchor.CENTER_LEFT);
+        String[] keys = new String[]{"W", "A", "S", "D", "P", "N", "J"};
+        for (int i = 0; i < keys.length; i++) {
+            int finalI = i;
+            Button b = new Button(keys[i],
+                    new Vector2D(1 / 7D * i, 0),
+                    new Vector2D(1 / 7D, 1)
+            );
+            boolean isDown = tick.item.tickInput.get(1 << finalI);
+            b.normalColor = isDown ? Theme.lightBackground : Theme.darkBackground;
+            b.textColor = isDown ? Theme.darkText : Theme.defaultText;
+            b.pressedColor = isDown ? Theme.darkBackground : Theme.lightBackground;
+            b.pressedTextColor = isDown ? Theme.defaultText : Theme.darkText;
+
+            b.hoverColor = b.normalColor;
+            b.setButtonCallback(mouseButton -> {
+                invertButton(1 << finalI);
+                boolean down = tick.item.tickInput.get(1 << finalI);
+                b.normalColor = down ? Theme.lightBackground : Theme.darkBackground;
+                b.textColor = down ? Theme.darkText : Theme.defaultText;
+                b.pressedColor = down ? Theme.darkBackground : Theme.lightBackground;
+                b.pressedTextColor = down ? Theme.defaultText : Theme.darkText;
+
+                b.hoverColor = b.normalColor;
+            });
+            buttonDiv.addChild(b, PERCENT.ALL, Anchor.CENTER_LEFT);
+        }
+
+        Div inputDiv = new Div(new Vector2D(0, 0), new Vector2D(0.4D, 0));
+        contentDiv.addChild(inputDiv, PERCENT.SIZE_X, Anchor.CENTER_RIGHT);
+
+        InputField yaw = new InputField(String.valueOf(tick.item.tickInput.getYaw()),
+                new Vector2D(0, 0),
+                1 / 3D);
+        yaw.setFilter("[-0-9.]");
+        inputDiv.addChild(yaw, PERCENT.X, Anchor.TOP_LEFT);
+        InputField pitch = new InputField(String.valueOf(tick.item.tickInput.getPitch()),
+                new Vector2D(0, 0),
+                1 / 3D);
+        pitch.setFilter("[-0-9.]");
+        inputDiv.addChild(pitch, PERCENT.X, Anchor.BOTTOM_LEFT);
+        InputField L = new InputField(String.valueOf(tick.item.tickInput.getL()),
+                new Vector2D(1 / 3D, 0),
+                1 / 3D);
+        L.setFilter("[0-9]");
+        inputDiv.addChild(L, PERCENT.X, Anchor.TOP_LEFT);
+        InputField R = new InputField(String.valueOf(tick.item.tickInput.getR()),
+                new Vector2D(1 / 3D, 0),
+                1 / 3D);
+        R.setFilter("[0-9]");
+        inputDiv.addChild(R, PERCENT.X, Anchor.BOTTOM_LEFT);
+        InputField count = new InputField("1",
+                new Vector2D(2 / 3D, 0),
+                1 / 3D);
+        R.setFilter("[0-9]");
+        inputDiv.addChild(count, PERCENT.X, Anchor.CENTER_LEFT);
+
+        Button addTop = new Button("+",
+                new Vector2D(1 / 4D, 0),
+                new Vector2D(1 / 6D, 10),
+                mouseButton -> {
+                    Macro.Node n = tick.addBefore(new Macro.Tick());
+                    MacroTick t = new MacroTick(parent, n);
+                    LinkedList<MacroTick>.Node m = node.addBefore(t);
+                    t.setNode(m);
+                });
+        passPositionTo(addTop, PERCENT.X, Anchor.TOP_CENTER, Anchor.TOP_LEFT);
+        editButtons.add(addTop);
+        Button addBottom = new Button("+",
+                new Vector2D(1 / 4D, 0),
+                new Vector2D(1 / 6D, 10),
+                mouseButton -> {
+                    Macro.Node n = tick.addAfter(new Macro.Tick());
+                    MacroTick t = new MacroTick(parent, n);
+                    LinkedList<MacroTick>.Node m = node.addAfter(t);
+                    t.setNode(m);
+                });
+        passPositionTo(addBottom, PERCENT.X, Anchor.BOTTOM_CENTER, Anchor.BOTTOM_LEFT);
+        editButtons.add(addBottom);
+
+        delete = new Button("Delete",
+                new Vector2D(3 / 4D, 0),
+                new Vector2D(1 / 6D, 10),
+                mouseButton -> {
+                    node.remove();
+                    tick.remove();
+                });
+        passPositionTo(delete, PERCENT.X, Anchor.TOP_CENTER, Anchor.TOP_LEFT);
+        editButtons.add(delete);
+    }
+
+    private void invertButton(int flag) {
+        TickInput in = tick.item.tickInput;
+        boolean prev = in.get(flag);
+        int inputs = in.getKeyInputs() & ~flag;
+        if (!prev) inputs |= flag;
+        tick.item.tickInput = new TickInput(inputs, in.getL(), in.getR(), in.getYaw(), in.getPitch());
+    }
+
+    public void setNode(LinkedList<MacroTick>.Node node) {
+        this.node = node;
+    }
+
+    public int getHeight() {
+        return HEIGHT + (collapsed ? 0 : 20);
+    }
+
+    public void render(int index, Vector2D pos, Vector2D size, Vector2D mouse) {
+        renderComponents(mouse);
+        if (!collapsed)
+            for (Component c : editButtons) c.render(mouse);
+
+        delete.enabled = ((MacroTickList) parent).items.getSize() > 1;
+
+        boolean isShiftDown = Keyboard.getPressedButtons().contains(InputConstants.KEY_LSHIFT);
+        if (mouse.isInRectBetweenPS(pos, size) && isShiftDown) {
+            this.setCollapsed(false);
+        } else {
+            this.setCollapsed(true);
+        }
+    }
+
+    @Override
+    public boolean handleMouseInput(Mouse.State state, Vector2D mousePos, Mouse.Button button) {
+        return !collapsed && ItrUtil.orMap(
+                ItrUtil.getAllOfType(MouseInputListener.class, editButtons),
+                e -> e.handleMouseInput(state, mousePos, button)
+        ) || super.handleMouseInput(state, mousePos, button);
+    }
+
+    private void setCollapsed(boolean collapsed) {
+        if (collapsed == this.collapsed) return;
+        this.collapsed = collapsed;
+    }
+
+    public static class Empty extends MacroTick {
+        public Empty(MacroTickList parent) {
+            super(parent, null);
+            setHeight(1, true);
+            addChild(new Button("Click here to create a new macro",
+                    new Vector2D(0, 0),
+                    new Vector2D(0.8D, 25),
+                    mouseButton -> {
+                        parent.setMacro(new Macro());
+                    }
+            ), PERCENT.SIZE_X, Anchor.CENTER);
+        }
+
+        @Override
+        public void render(int index, Vector2D pos, Vector2D size, Vector2D mouse) {
+            renderComponents(mouse);
+        }
+    }
+}
+

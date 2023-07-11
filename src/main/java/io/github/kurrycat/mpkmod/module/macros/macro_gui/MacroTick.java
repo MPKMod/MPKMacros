@@ -2,6 +2,7 @@ package io.github.kurrycat.mpkmod.module.macros.macro_gui;
 
 import io.github.kurrycat.mpkmod.compatibility.MCClasses.InputConstants;
 import io.github.kurrycat.mpkmod.compatibility.MCClasses.Keyboard;
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.Renderer2D;
 import io.github.kurrycat.mpkmod.gui.Theme;
 import io.github.kurrycat.mpkmod.gui.components.*;
 import io.github.kurrycat.mpkmod.gui.interfaces.MouseInputListener;
@@ -232,17 +233,22 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
     }
 
     public void render(int index, Vector2D pos, Vector2D size, Vector2D mouse) {
-        if (collapseAnim > 0) collapseAnim--;
+        Renderer2D.enableScissor(getDisplayedPos().getX(), getDisplayedPos().getY(),
+                getDisplayedSize().getX(), getDisplayedSize().getY());
 
         renderComponents(mouse);
-        if (!collapsed)
+        if (!collapsed || collapseAnim != 0)
             for (Component c : editButtons) c.render(mouse);
+
+        Renderer2D.disableScissor();
 
         if (delete != null)
             delete.enabled = ((MacroTickList) parent).items.getSize() > 1;
 
         boolean isShiftDown = Keyboard.getPressedButtons().contains(InputConstants.KEY_LSHIFT);
         this.setCollapsed(!mouse.isInRectBetweenPS(pos, size) || !isShiftDown);
+
+        if (collapseAnim > 0) collapseAnim--;
     }
 
     public int getHeight() {

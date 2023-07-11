@@ -4,17 +4,18 @@ import io.github.kurrycat.mpkmod.gui.ComponentScreen;
 import io.github.kurrycat.mpkmod.gui.components.Anchor;
 import io.github.kurrycat.mpkmod.gui.components.Button;
 import io.github.kurrycat.mpkmod.gui.components.Div;
+import io.github.kurrycat.mpkmod.module.macros.Macro;
 import io.github.kurrycat.mpkmod.util.Vector2D;
 
 public class MacroGUI extends ComponentScreen {
     private MacroTickList macroTickList;
 
-    public boolean shouldCreateKeyBind() {
-        return true;
-    }
-
     public boolean resetOnOpen() {
         return false;
+    }
+
+    public Macro getCurrentMacro() {
+        return macroTickList.currentMacro;
     }
 
     public void onGuiInit() {

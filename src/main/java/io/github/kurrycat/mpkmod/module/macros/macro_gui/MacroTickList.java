@@ -1,9 +1,7 @@
 package io.github.kurrycat.mpkmod.module.macros.macro_gui;
 
-import io.github.kurrycat.mpkmod.compatibility.MCClasses.Minecraft;
 import io.github.kurrycat.mpkmod.gui.Theme;
 import io.github.kurrycat.mpkmod.gui.components.*;
-import io.github.kurrycat.mpkmod.module.macros.MPKMacros;
 import io.github.kurrycat.mpkmod.module.macros.Macro;
 import io.github.kurrycat.mpkmod.module.macros.util.LinkedList;
 import io.github.kurrycat.mpkmod.util.Vector2D;
@@ -47,7 +45,7 @@ public class MacroTickList extends ScrollableList<MacroTick> {
                 new Vector2D(0, 0),
                 new Vector2D(-10, 20),
                 mouseButton -> {
-                    ((MacroGUI) parent).close();
+                    ((MacroGUI) getRoot()).close();
                     if (currentMacro != null)
                         currentMacro.run();
                 }

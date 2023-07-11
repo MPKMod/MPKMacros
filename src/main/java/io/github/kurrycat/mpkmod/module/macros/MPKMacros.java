@@ -23,7 +23,7 @@ public class MPKMacros implements MPKModule {
     public void loaded() {
         FileUtil.init();
         API.registerGUIScreen("macro_gui", new MacroGUI());
-        EventAPI.addListener(EventAPI.EventListener.onTickStart(e -> {
+        EventAPI.addListener(EventAPI.EventListener.onTickEnd(e -> {
             if (currentMacro == null) return;
 
             if (Keyboard.getPressedButtons().size() != 0 || !currentMacro.tick()) {

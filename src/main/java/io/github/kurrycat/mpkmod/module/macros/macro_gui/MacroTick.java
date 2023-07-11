@@ -20,19 +20,34 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
     public Macro.Node tick;
     public LinkedList<MacroTick>.Node node;
     protected boolean collapsed = true;
-    private static final int HEIGHT = 24;
+    private static final int COLLAPSED_HEIGHT = 24;
+    private static final int FULL_HEIGHT = 44;
+    private int collapseAnim = 0;
+    private static final int COLLAPSE_ANIM_FRAMES = 6;
 
-    private ArrayList<Component> editButtons = new ArrayList<>();
-
-    private Button delete;
+    private final ArrayList<Component> editButtons = new ArrayList<>();
+    private Button delete = null;
 
     public MacroTick(MacroTickList parent, Macro.Node tick) {
         super(parent);
         this.tick = tick;
 
-        if (tick == null) return;
+        createComponents();
+    }
 
-        Div contentDiv = new Div(new Vector2D(1, 0), new Vector2D(-2, HEIGHT - 2));
+    private void createComponents() {
+        if (tick == null) return;
+        if (tick.item.tickInput == null) createJumpComponents();
+        else createNormalComponents();
+        createEditComponents();
+    }
+
+    private void createJumpComponents() {
+
+    }
+
+    private void createNormalComponents() {
+        Div contentDiv = new Div(new Vector2D(1, 0), new Vector2D(-2, COLLAPSED_HEIGHT - 2));
         contentDiv.borderColor = Theme.lightEdge;
         addChild(contentDiv, PERCENT.NONE, Anchor.CENTER_LEFT);
 
@@ -65,8 +80,8 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
             buttonDiv.addChild(b, PERCENT.ALL, Anchor.CENTER_LEFT);
         }
 
-        Div inputDiv = new Div(new Vector2D(0, 0), new Vector2D(0.4D, 0));
-        contentDiv.addChild(inputDiv, PERCENT.SIZE_X, Anchor.CENTER_RIGHT);
+        Div inputDiv = new Div(new Vector2D(0, 0), new Vector2D(0.4D, 1));
+        contentDiv.addChild(inputDiv, PERCENT.SIZE, Anchor.CENTER_RIGHT);
 
         InputField yaw = new InputField(String.valueOf(tick.item.tickInput.getYaw()),
                 new Vector2D(0, 0),
@@ -96,6 +111,7 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
                     in.getYaw(), angle == null ? in.getPitch() : angle, in.getCount());
         });
         inputDiv.addChild(pitch, PERCENT.X, Anchor.BOTTOM_LEFT);
+
         InputField L = new InputField(String.valueOf(tick.item.tickInput.getL()),
                 new Vector2D(1 / 3D, 0),
                 1 / 3D);
@@ -110,6 +126,7 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
                     in.getYaw(), in.getPitch(), in.getCount());
         });
         inputDiv.addChild(L, PERCENT.X, Anchor.TOP_LEFT);
+
         InputField R = new InputField(String.valueOf(tick.item.tickInput.getR()),
                 new Vector2D(1 / 3D, 0),
                 1 / 3D);
@@ -124,6 +141,7 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
                     in.getYaw(), in.getPitch(), in.getCount());
         });
         inputDiv.addChild(R, PERCENT.X, Anchor.BOTTOM_LEFT);
+
         InputField countField = new InputField(String.valueOf(tick.item.tickInput.getCount()),
                 new Vector2D(2 / 3D, 0),
                 1 / 3D);
@@ -139,9 +157,12 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
                     in.getYaw(), in.getPitch(), count == null ? in.getCount() : count);
         });
         inputDiv.addChild(countField, PERCENT.X, Anchor.CENTER_LEFT);
+    }
 
+    private void createEditComponents() {
+        MacroTickList parent = (MacroTickList) this.parent;
         Button addTop = new Button("+",
-                new Vector2D(1 / 4D, 0),
+                new Vector2D(1 / 4D, -FULL_HEIGHT / 2D),
                 new Vector2D(1 / 6D, 10),
                 mouseButton -> {
                     Macro.Node n = tick.addBefore(new Macro.Tick());
@@ -149,10 +170,10 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
                     LinkedList<MacroTick>.Node m = node.addBefore(t);
                     t.setNode(m);
                 });
-        passPositionTo(addTop, PERCENT.X, Anchor.TOP_CENTER, Anchor.TOP_LEFT);
+        passPositionTo(addTop, PERCENT.X, Anchor.TOP_CENTER, Anchor.CENTER_LEFT);
         editButtons.add(addTop);
         Button addBottom = new Button("+",
-                new Vector2D(1 / 4D, 0),
+                new Vector2D(1 / 4D, FULL_HEIGHT / 2D),
                 new Vector2D(1 / 6D, 10),
                 mouseButton -> {
                     Macro.Node n = tick.addAfter(new Macro.Tick());
@@ -160,17 +181,40 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
                     LinkedList<MacroTick>.Node m = node.addAfter(t);
                     t.setNode(m);
                 });
-        passPositionTo(addBottom, PERCENT.X, Anchor.BOTTOM_CENTER, Anchor.BOTTOM_LEFT);
+        passPositionTo(addBottom, PERCENT.X, Anchor.BOTTOM_CENTER, Anchor.CENTER_LEFT);
         editButtons.add(addBottom);
 
+        Button jumpTop = new Button("J",
+                new Vector2D(1 / 2D, -FULL_HEIGHT / 2D),
+                new Vector2D(1 / 6D, 10),
+                mouseButton -> {
+                    Macro.Node n = tick.addBefore(Macro.Tick.Jump());
+                    MacroTick t = new MacroTick(parent, n);
+                    LinkedList<MacroTick>.Node m = node.addBefore(t);
+                    t.setNode(m);
+                });
+        passPositionTo(jumpTop, PERCENT.X, Anchor.TOP_CENTER, Anchor.CENTER_LEFT);
+        editButtons.add(jumpTop);
+        Button jumpBottom = new Button("J",
+                new Vector2D(1 / 2D, FULL_HEIGHT / 2D),
+                new Vector2D(1 / 6D, 10),
+                mouseButton -> {
+                    Macro.Node n = tick.addAfter(Macro.Tick.Jump());
+                    MacroTick t = new MacroTick(parent, n);
+                    LinkedList<MacroTick>.Node m = node.addAfter(t);
+                    t.setNode(m);
+                });
+        passPositionTo(jumpBottom, PERCENT.X, Anchor.BOTTOM_CENTER, Anchor.CENTER_LEFT);
+        editButtons.add(jumpBottom);
+
         delete = new Button("Delete",
-                new Vector2D(3 / 4D, 0),
+                new Vector2D(3 / 4D, -FULL_HEIGHT / 2D),
                 new Vector2D(1 / 6D, 10),
                 mouseButton -> {
                     node.remove();
                     tick.remove();
                 });
-        passPositionTo(delete, PERCENT.X, Anchor.TOP_CENTER, Anchor.TOP_LEFT);
+        passPositionTo(delete, PERCENT.X, Anchor.TOP_CENTER, Anchor.CENTER_LEFT);
         editButtons.add(delete);
     }
 
@@ -188,18 +232,24 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
     }
 
     public void render(int index, Vector2D pos, Vector2D size, Vector2D mouse) {
+        if (collapseAnim > 0) collapseAnim--;
+
         renderComponents(mouse);
         if (!collapsed)
             for (Component c : editButtons) c.render(mouse);
 
-        delete.enabled = ((MacroTickList) parent).items.getSize() > 1;
+        if (delete != null)
+            delete.enabled = ((MacroTickList) parent).items.getSize() > 1;
 
         boolean isShiftDown = Keyboard.getPressedButtons().contains(InputConstants.KEY_LSHIFT);
         this.setCollapsed(!mouse.isInRectBetweenPS(pos, size) || !isShiftDown);
     }
 
     public int getHeight() {
-        return HEIGHT + (collapsed ? 0 : 20);
+        return (int) MathUtil.map((double) collapseAnim, 0, COLLAPSE_ANIM_FRAMES,
+                collapsed ? COLLAPSED_HEIGHT : FULL_HEIGHT,
+                collapsed ? FULL_HEIGHT : COLLAPSED_HEIGHT
+        );
     }
 
     @Override
@@ -212,6 +262,11 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
 
     private void setCollapsed(boolean collapsed) {
         if (collapsed == this.collapsed) return;
+        collapseAnim = (int) MathUtil.map((double) getHeight(),
+                this.collapsed ? COLLAPSED_HEIGHT : FULL_HEIGHT,
+                this.collapsed ? FULL_HEIGHT : COLLAPSED_HEIGHT,
+                COLLAPSE_ANIM_FRAMES, 0
+        );
         this.collapsed = collapsed;
     }
 

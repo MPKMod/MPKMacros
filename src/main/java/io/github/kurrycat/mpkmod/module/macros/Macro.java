@@ -118,7 +118,7 @@ public class Macro extends LinkedList<Macro.Tick> {
         protected Node target = null;
         protected int jumpCount;
         protected int counter;
-        protected boolean resetCounterOnDifferentJump;
+        protected boolean resetCounterOnDifferentJump = true;
 
         public Tick(TickHeaderFormat headerFormat, String[] row) {
             this(new TickInput(
@@ -137,9 +137,13 @@ public class Macro extends LinkedList<Macro.Tick> {
             ));
         }
 
-        public Tick(TickInput tickInput) {
+        private Tick(TickInput tickInput) {
             super();
             this.tickInput = tickInput;
+        }
+
+        public static Tick Jump() {
+            return new Tick(null);
         }
 
         public Tick() {
@@ -174,7 +178,7 @@ public class Macro extends LinkedList<Macro.Tick> {
 
     public class It extends Itr {
         public It() {
-            if (curr.item.target != null)
+            if (curr.item.tickInput == null)
                 next();
         }
 
@@ -183,14 +187,15 @@ public class Macro extends LinkedList<Macro.Tick> {
         }
 
         public Tick next() {
-            if (curr.item.target == null)
+            if (curr.item.tickInput != null)
                 return super.next();
 
-            if (curr.item.resetCounterOnDifferentJump && Tick.lastJump != curr.item) {
+            boolean hasTarget = curr.item.target != null;
+            if (hasTarget && curr.item.resetCounterOnDifferentJump && Tick.lastJump != curr.item) {
                 curr.item.counter = curr.item.jumpCount;
                 Tick.lastJump = curr.item;
             }
-            if (curr.item.counter == 0) {
+            if (!hasTarget || curr.item.counter == 0) {
                 curr = curr.next;
                 return next();
             }

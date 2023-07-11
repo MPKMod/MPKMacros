@@ -3,6 +3,7 @@ package io.github.kurrycat.mpkmod.module.macros.macro_gui;
 import io.github.kurrycat.mpkmod.gui.ComponentScreen;
 import io.github.kurrycat.mpkmod.gui.components.Anchor;
 import io.github.kurrycat.mpkmod.gui.components.Button;
+import io.github.kurrycat.mpkmod.gui.components.Div;
 import io.github.kurrycat.mpkmod.util.Vector2D;
 
 public class MacroGUI extends ComponentScreen {
@@ -19,27 +20,31 @@ public class MacroGUI extends ComponentScreen {
     public void onGuiInit() {
         super.onGuiInit();
 
+        Div contentDiv = new Div(new Vector2D(10, 10), new Vector2D(-20, -20));
+        addChild(contentDiv);
         macroTickList = new MacroTickList(
-                new Vector2D(0.05D, 0.05D),
-                new Vector2D(0.6D, 0.9D)
+                new Vector2D(0, 0),
+                new Vector2D(0.7D, 1)
         );
 
-        addChild(macroTickList, PERCENT.ALL, Anchor.TOP_LEFT);
+        contentDiv.addChild(macroTickList, PERCENT.ALL, Anchor.TOP_LEFT);
         macroTickList.topCover.addChild(
                 new Button(
                         "x",
-                        new Vector2D(5, 1),
+                        new Vector2D(5, 0),
                         new Vector2D(11, 11),
                         mouseButton -> close()
                 ),
                 PERCENT.NONE, Anchor.CENTER_RIGHT
         );
 
-        addChild(new MacroFileList(
+        Div fileListDiv = new Div(new Vector2D(0, 0), new Vector2D(0.3D, 1));
+        contentDiv.addChild(fileListDiv, PERCENT.SIZE, Anchor.TOP_RIGHT);
+        fileListDiv.addChild(new MacroFileList(
                 macroTickList,
-                new Vector2D(0.05D, 0.05D),
-                new Vector2D(0.25D, 0.9D)
-        ), PERCENT.ALL, Anchor.TOP_RIGHT);
+                new Vector2D(0, 0),
+                new Vector2D(-10, 1)
+        ), PERCENT.SIZE_Y, Anchor.TOP_RIGHT);
     }
 
     @Override

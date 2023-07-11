@@ -7,7 +7,10 @@ import io.github.kurrycat.mpkmod.util.Vector2D;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MacroFileList extends ScrollableList<MacroFileList.MacroFile> {
     private final MacroTickList macroTickList;
@@ -50,8 +53,12 @@ public class MacroFileList extends ScrollableList<MacroFileList.MacroFile> {
         File[] files = FileUtil.MACRO_FOLDER.listFiles();
         if (files == null) return;
 
+        List<File> fileList = Arrays.stream(files)
+                .sorted(Comparator.comparingLong(File::lastModified).reversed())
+                .collect(Collectors.toList());
+
         allItems.clear();
-        for (File file : files) {
+        for (File file : fileList) {
             if (!file.getName().endsWith(".csv")) continue;
             allItems.add(new MacroFile(this, file));
         }

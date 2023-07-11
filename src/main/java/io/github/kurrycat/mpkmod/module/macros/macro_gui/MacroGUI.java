@@ -49,7 +49,7 @@ public class MacroGUI extends ComponentScreen {
     }
 
     @Override
-    public void drawScreen(Vector2D mouse, float partialTicks) {
-        super.drawScreen(mouse, partialTicks);
+    public void render(Vector2D mouse, float partialTicks) {
+        super.render(mouse, partialTicks);
     }
 }

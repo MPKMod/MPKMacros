@@ -1,10 +1,11 @@
 package io.github.kurrycat.mpkmod.module.macros;
 
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.Minecraft;
 import io.github.kurrycat.mpkmod.module.macros.util.FileUtil;
 import io.github.kurrycat.mpkmod.module.macros.util.LinkedList;
+import io.github.kurrycat.mpkmod.ticks.TickInput;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 public class Macro extends LinkedList<Macro.Tick> {
     public String name;
@@ -36,7 +37,56 @@ public class Macro extends LinkedList<Macro.Tick> {
     }
 
     public void load() {
+        try (BufferedReader br = new BufferedReader(new FileReader(macroFile))) {
+            String header = br.readLine();
+            if (header == null) {
+                MPKMacros.LOGGER.info("File is empty: " + macroFile.getAbsolutePath());
+                return;
+            }
+            TickHeaderFormat headerFormat = new TickHeaderFormat(header);
+            String line;
 
+            while ((line = br.readLine()) != null) {
+                String[] row = line.split(TickHeaderFormat.CSV_SEPARATOR);
+                addLast(new Tick(headerFormat, row));
+            }
+        } catch (IOException e) {
+            MPKMacros.LOGGER.info("Failed to read file: " + macroFile.getAbsolutePath());
+        }
+    }
+
+    public void run() {
+        MPKMacros.currentMacro = new Runner();
+    }
+
+    public class Runner {
+        private final It it;
+        private int count;
+        private Tick curr;
+
+        public Runner() {
+            it = iterator();
+            if (it.hasNext()) {
+                curr = it.next();
+                count = curr.tickInput.getCount();
+            }
+        }
+
+        public boolean tick() {
+            if (curr == null || (count == 0 && !it.hasNext())) return false;
+            if (count == 0) {
+                curr = it.next();
+                count = curr.tickInput.getCount();
+            }
+
+            Minecraft.setInputs(curr.tickInput);
+            count--;
+            return true;
+        }
+
+        public void stop() {
+            Minecraft.setInputs(new TickInput());
+        }
     }
 
     public void save() {
@@ -48,7 +98,16 @@ public class Macro extends LinkedList<Macro.Tick> {
             return;
         }
 
-
+        try (PrintWriter pw = new PrintWriter(macroFile)) {
+            pw.println(TickHeaderFormat.getCSVHeader());
+            for (Itr it = super.iterator(); it.hasNext(); ) {
+                Tick macroTick = it.next();
+                pw.println(macroTick.getCSV());
+            }
+        } catch (FileNotFoundException e) {
+            MPKMacros.LOGGER.info("Failed to create file: " + macroFile.getAbsolutePath());
+            return;
+        }
     }
 
     public static class Tick {
@@ -60,6 +119,23 @@ public class Macro extends LinkedList<Macro.Tick> {
         protected int jumpCount;
         protected int counter;
         protected boolean resetCounterOnDifferentJump;
+
+        public Tick(TickHeaderFormat headerFormat, String[] row) {
+            this(new TickInput(
+                    headerFormat.getW(row),
+                    headerFormat.getA(row),
+                    headerFormat.getS(row),
+                    headerFormat.getD(row),
+                    headerFormat.getP(row),
+                    headerFormat.getN(row),
+                    headerFormat.getJ(row),
+                    headerFormat.getL(row),
+                    headerFormat.getR(row),
+                    headerFormat.getYaw(row),
+                    headerFormat.getPitch(row),
+                    headerFormat.getCount(row)
+            ));
+        }
 
         public Tick(TickInput tickInput) {
             super();
@@ -74,6 +150,21 @@ public class Macro extends LinkedList<Macro.Tick> {
         public String toString() {
             return tickInput == null ? "null" : tickInput.toString();
         }
+
+        public String getCSV() {
+            return tickInput.getW() + "," +
+                   tickInput.getA() + "," +
+                   tickInput.getS() + "," +
+                   tickInput.getD() + "," +
+                   tickInput.getP() + "," +
+                   tickInput.getN() + "," +
+                   tickInput.getJ() + "," +
+                   tickInput.getYaw() + "," +
+                   tickInput.getPitch() + "," +
+                   tickInput.getL() + "," +
+                   tickInput.getR() + "," +
+                   tickInput.getCount();
+        }
     }
 
     @Override
@@ -82,6 +173,11 @@ public class Macro extends LinkedList<Macro.Tick> {
     }
 
     public class It extends Itr {
+        public It() {
+            if (curr.item.target != null)
+                next();
+        }
+
         public boolean hasNext() {
             return super.hasNext();
         }
@@ -96,12 +192,12 @@ public class Macro extends LinkedList<Macro.Tick> {
             }
             if (curr.item.counter == 0) {
                 curr = curr.next;
-                return super.next();
+                return next();
             }
             curr.item.counter--;
             curr = curr.item.target;
 
-            return super.next();
+            return next();
         }
     }
 }

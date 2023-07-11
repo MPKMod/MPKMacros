@@ -6,13 +6,15 @@ import io.github.kurrycat.mpkmod.gui.Theme;
 import io.github.kurrycat.mpkmod.gui.components.*;
 import io.github.kurrycat.mpkmod.gui.interfaces.MouseInputListener;
 import io.github.kurrycat.mpkmod.module.macros.Macro;
-import io.github.kurrycat.mpkmod.module.macros.TickInput;
 import io.github.kurrycat.mpkmod.module.macros.util.LinkedList;
+import io.github.kurrycat.mpkmod.ticks.TickInput;
 import io.github.kurrycat.mpkmod.util.ItrUtil;
+import io.github.kurrycat.mpkmod.util.MathUtil;
 import io.github.kurrycat.mpkmod.util.Mouse;
 import io.github.kurrycat.mpkmod.util.Vector2D;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class MacroTick extends ScrollableListItem<MacroTick> {
     public Macro.Node tick;
@@ -70,27 +72,73 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
                 new Vector2D(0, 0),
                 1 / 3D);
         yaw.setFilter("[-0-9.]");
+        yaw.setOnContentChange(content -> {
+            Float angle = MathUtil.parseFloat(content.getContent(), null);
+            yaw.edgeColor = angle == null ? Theme.warnText : Theme.lightEdge;
+
+            TickInput in = tick.item.tickInput;
+            tick.item.tickInput = new TickInput(in.getKeyInputs(),
+                    in.getL(), in.getR(),
+                    angle == null ? in.getYaw() : angle, in.getPitch(), in.getCount());
+        });
         inputDiv.addChild(yaw, PERCENT.X, Anchor.TOP_LEFT);
         InputField pitch = new InputField(String.valueOf(tick.item.tickInput.getPitch()),
                 new Vector2D(0, 0),
                 1 / 3D);
         pitch.setFilter("[-0-9.]");
+        pitch.setOnContentChange(content -> {
+            Float angle = MathUtil.parseFloat(content.getContent(), null);
+            pitch.edgeColor = angle == null ? Theme.warnText : Theme.lightEdge;
+
+            TickInput in = tick.item.tickInput;
+            tick.item.tickInput = new TickInput(in.getKeyInputs(),
+                    in.getL(), in.getR(),
+                    in.getYaw(), angle == null ? in.getPitch() : angle, in.getCount());
+        });
         inputDiv.addChild(pitch, PERCENT.X, Anchor.BOTTOM_LEFT);
         InputField L = new InputField(String.valueOf(tick.item.tickInput.getL()),
                 new Vector2D(1 / 3D, 0),
                 1 / 3D);
         L.setFilter("[0-9]");
+        L.setOnContentChange(content -> {
+            Integer count = MathUtil.parseInt(content.getContent(), null);
+            L.edgeColor = count == null ? Theme.warnText : Theme.lightEdge;
+
+            TickInput in = tick.item.tickInput;
+            tick.item.tickInput = new TickInput(in.getKeyInputs(),
+                    count == null ? in.getL() : count, in.getR(),
+                    in.getYaw(), in.getPitch(), in.getCount());
+        });
         inputDiv.addChild(L, PERCENT.X, Anchor.TOP_LEFT);
         InputField R = new InputField(String.valueOf(tick.item.tickInput.getR()),
                 new Vector2D(1 / 3D, 0),
                 1 / 3D);
         R.setFilter("[0-9]");
+        R.setOnContentChange(content -> {
+            Integer count = MathUtil.parseInt(content.getContent(), null);
+            R.edgeColor = count == null ? Theme.warnText : Theme.lightEdge;
+
+            TickInput in = tick.item.tickInput;
+            tick.item.tickInput = new TickInput(in.getKeyInputs(),
+                    in.getL(), count == null ? in.getR() : count,
+                    in.getYaw(), in.getPitch(), in.getCount());
+        });
         inputDiv.addChild(R, PERCENT.X, Anchor.BOTTOM_LEFT);
-        InputField count = new InputField("1",
+        InputField countField = new InputField(String.valueOf(tick.item.tickInput.getCount()),
                 new Vector2D(2 / 3D, 0),
                 1 / 3D);
-        R.setFilter("[0-9]");
-        inputDiv.addChild(count, PERCENT.X, Anchor.CENTER_LEFT);
+        countField.setFilter("[0-9]");
+        countField.setOnContentChange(content -> {
+            Integer count = MathUtil.parseInt(content.getContent(), null);
+            if (Objects.equals(count, 0)) count = null;
+            countField.edgeColor = count == null ? Theme.warnText : Theme.lightEdge;
+
+            TickInput in = tick.item.tickInput;
+            tick.item.tickInput = new TickInput(in.getKeyInputs(),
+                    in.getL(), in.getR(),
+                    in.getYaw(), in.getPitch(), count == null ? in.getCount() : count);
+        });
+        inputDiv.addChild(countField, PERCENT.X, Anchor.CENTER_LEFT);
 
         Button addTop = new Button("+",
                 new Vector2D(1 / 4D, 0),
@@ -131,15 +179,12 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
         boolean prev = in.get(flag);
         int inputs = in.getKeyInputs() & ~flag;
         if (!prev) inputs |= flag;
-        tick.item.tickInput = new TickInput(inputs, in.getL(), in.getR(), in.getYaw(), in.getPitch());
+        tick.item.tickInput = new TickInput(inputs,
+                in.getL(), in.getR(), in.getYaw(), in.getPitch(), in.getCount());
     }
 
     public void setNode(LinkedList<MacroTick>.Node node) {
         this.node = node;
-    }
-
-    public int getHeight() {
-        return HEIGHT + (collapsed ? 0 : 20);
     }
 
     public void render(int index, Vector2D pos, Vector2D size, Vector2D mouse) {
@@ -150,11 +195,11 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
         delete.enabled = ((MacroTickList) parent).items.getSize() > 1;
 
         boolean isShiftDown = Keyboard.getPressedButtons().contains(InputConstants.KEY_LSHIFT);
-        if (mouse.isInRectBetweenPS(pos, size) && isShiftDown) {
-            this.setCollapsed(false);
-        } else {
-            this.setCollapsed(true);
-        }
+        this.setCollapsed(!mouse.isInRectBetweenPS(pos, size) || !isShiftDown);
+    }
+
+    public int getHeight() {
+        return HEIGHT + (collapsed ? 0 : 20);
     }
 
     @Override

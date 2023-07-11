@@ -29,6 +29,10 @@ public class LinkedList<T> implements Iterable<T> {
             curr = curr.next;
             return n;
         }
+
+        public T peek() {
+            return curr.item;
+        }
     }
 
     public class NodeItr implements Iterator<Node> {
@@ -44,6 +48,10 @@ public class LinkedList<T> implements Iterable<T> {
             Node n = curr;
             curr = curr.next;
             return n;
+        }
+
+        public Node peek() {
+            return curr;
         }
     }
 

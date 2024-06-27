@@ -106,7 +106,6 @@ public class Macro extends LinkedList<Macro.Tick> {
             }
         } catch (FileNotFoundException e) {
             MPKMacros.LOGGER.info("Failed to create file: " + macroFile.getAbsolutePath());
-            return;
         }
     }
 

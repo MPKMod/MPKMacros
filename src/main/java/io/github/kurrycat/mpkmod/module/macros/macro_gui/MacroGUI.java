@@ -1,5 +1,8 @@
 package io.github.kurrycat.mpkmod.module.macros.macro_gui;
 
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.InputConstants;
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.Keyboard;
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.Minecraft;
 import io.github.kurrycat.mpkmod.gui.ComponentScreen;
 import io.github.kurrycat.mpkmod.gui.components.Anchor;
 import io.github.kurrycat.mpkmod.gui.components.Button;
@@ -12,6 +15,19 @@ public class MacroGUI extends ComponentScreen {
 
     public boolean resetOnOpen() {
         return false;
+    }
+
+    public boolean shouldCreateKeyBind() {
+        return true;
+    }
+
+    public void onKeybindPressed() {
+        if (Keyboard.getPressedButtons().contains(InputConstants.KEY_LSHIFT)) {
+            if (macroTickList != null && macroTickList.currentMacro != null)
+                macroTickList.currentMacro.run();
+        } else {
+            Minecraft.displayGuiScreen(this);
+        }
     }
 
     public Macro getCurrentMacro() {

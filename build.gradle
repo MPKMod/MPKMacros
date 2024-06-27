@@ -1,12 +1,25 @@
 import groovy.json.JsonBuilder
+import proguard.gradle.ProGuardTask
+
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.guardsquare:proguard-gradle:7.5.0'
+    }
+}
 
 plugins {
     id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.1"
 }
 
 group = 'io.github.kurrycat.mpkmod.module.macros'
-version = '1.0'
+version = '0.1.0'
 archivesBaseName = 'mpkmacros'
+var mainClassPath = "io.github.kurrycat.mpkmod.module.macros.MPKMacros"
 
 tasks.withType(JavaCompile) {
     sourceCompatibility = '1.8'
@@ -24,7 +37,7 @@ dependencies {
     compileOnly 'org.apache.logging.log4j:log4j-api:2.0-beta9'
     compileOnly 'org.apache.logging.log4j:log4j-core:2.0-beta9'
 
-    implementation 'com.github.kurrycat2004:mpkmod-api:1.0'
+    compileOnly 'com.github.kurrycat2004:mpkmod-api:1.0'
 }
 
 jar {
@@ -33,7 +46,7 @@ jar {
 
     jsonBuilder {
         moduleName "mpkmacros"
-        mainClass "io.github.kurrycat.mpkmod.module.macros.MPKMacros"
+        mainClass mainClassPath
     }
 
     config.text = jsonBuilder.toPrettyString()
@@ -48,7 +61,7 @@ tasks.register("buildAndMove") {
         if (!project.hasProperty("dir")) {
             println "Argument -Pdir missing, please provide Minecraft mods folder path"
         } else {
-            for(String s : project.property("dir").split(";")) {
+            for (String s : project.property("dir").split(";")) {
                 copy {
                     from "${buildDir}/libs"
                     into file(s)
@@ -56,4 +69,36 @@ tasks.register("buildAndMove") {
             }
         }
     }
+}
+
+
+shadowJar {
+    archiveClassifier.set('all')
+    mergeServiceFiles()
+    manifest {
+        attributes 'Main-Class': mainClassPath
+    }
+}
+
+
+build {
+    dependsOn shadowJar
+}
+
+tasks.register("obfuscateJar", ProGuardTask) {
+    dependsOn jar
+    verbose()
+    configuration file('proguard-rules.pro')
+    injars file("${buildDir}/libs/${archivesBaseName}-${version}.jar")
+    outjars file("${buildDir}/libs/${archivesBaseName}-${version}-obfuscated.jar")
+
+    if (System.getProperty('java.version').startsWith('1.')) {
+        // Before Java 9, the runtime classes were packaged in a single jar file.
+        libraryjars "${System.getProperty('java.home')}/lib/rt.jar"
+    } else {
+        // As of Java 9, the runtime classes are packaged in modular jmod files.
+        libraryjars "${System.getProperty('java.home')}/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
+    }
+
+    libraryjars configurations.compileClasspath.files
 }

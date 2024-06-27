@@ -64,6 +64,7 @@ tasks.register("buildAndMove") {
             for (String s : project.property("dir").split(";")) {
                 copy {
                     from "${buildDir}/libs"
+                    include "${archivesBaseName}-${version}.jar"
                     into file(s)
                 }
             }

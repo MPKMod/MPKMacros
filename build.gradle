@@ -37,7 +37,7 @@ dependencies {
     compileOnly 'org.apache.logging.log4j:log4j-api:2.0-beta9'
     compileOnly 'org.apache.logging.log4j:log4j-core:2.0-beta9'
 
-    compileOnly 'com.github.kurrycat2004:mpkmod-api:1.0'
+    compileOnly 'com.github.kurrycat2004:MPKMod_2:2.0.0-pre.11'
 }
 
 jar {

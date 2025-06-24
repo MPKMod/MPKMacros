@@ -132,6 +132,7 @@ public class Macro extends LinkedList<Macro.Tick> {
                     headerFormat.getR(row),
                     headerFormat.getYaw(row),
                     headerFormat.getPitch(row),
+                    headerFormat.getSlot(row),
                     headerFormat.getCount(row)
             ));
         }
@@ -166,6 +167,7 @@ public class Macro extends LinkedList<Macro.Tick> {
                    tickInput.getPitch() + "," +
                    tickInput.getL() + "," +
                    tickInput.getR() + "," +
+                   tickInput.getSlot() + "," +
                    tickInput.getCount();
         }
     }

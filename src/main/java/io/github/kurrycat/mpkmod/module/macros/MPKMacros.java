@@ -28,7 +28,7 @@ public class MPKMacros implements MPKModule {
         init();
         FileUtil.init();
 
-        EventAPI.addListener(EventAPI.EventListener.onTickEnd(e -> {
+        EventAPI.addListener(EventAPI.EventListener.onTickStart(e -> {
             if (currentMacro == null) return;
 
             List<Integer> buttons = Keyboard.getPressedButtons();

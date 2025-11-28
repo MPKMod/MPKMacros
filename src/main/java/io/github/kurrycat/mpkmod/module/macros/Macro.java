@@ -1,6 +1,7 @@
 package io.github.kurrycat.mpkmod.module.macros;
 
 import io.github.kurrycat.mpkmod.compatibility.MCClasses.Minecraft;
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.Player;
 import io.github.kurrycat.mpkmod.module.macros.util.FileUtil;
 import io.github.kurrycat.mpkmod.module.macros.util.LinkedList;
 import io.github.kurrycat.mpkmod.ticks.TickInput;
@@ -63,6 +64,8 @@ public class Macro extends LinkedList<Macro.Tick> {
         private final It it;
         private int count;
         private Tick curr;
+        private float savedYaw;
+        private float savedPitch;
 
         public Runner() {
             it = iterator();
@@ -70,16 +73,29 @@ public class Macro extends LinkedList<Macro.Tick> {
                 curr = it.next();
                 count = curr.tickInput.getCount();
             }
+
+            Player player = Player.getLatest();
+            savedYaw = player.getTrueYaw();
+            savedPitch = player.getTruePitch();
         }
 
         public boolean tick() {
-            if (curr == null || (count == 0 && !it.hasNext())) return false;
-            if (count == 0) {
+            if (curr == null) return false;
+            while (count == 0) {
+                if (!it.hasNext()) return false;
+
                 curr = it.next();
                 count = curr.tickInput.getCount();
             }
 
-            Minecraft.setInputs(curr.tickInput);
+            savedYaw += curr.tickInput.getYaw();
+            savedPitch += curr.tickInput.getPitch();
+
+            Minecraft.setInputs(
+                    savedYaw, false, savedPitch, false,
+                    curr.tickInput.getKeyInputs(), ~curr.tickInput.getKeyInputs(),
+                    curr.tickInput.getL(), curr.tickInput.getR()
+            );
             count--;
             return true;
         }

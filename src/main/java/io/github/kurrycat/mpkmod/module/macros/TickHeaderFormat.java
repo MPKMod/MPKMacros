@@ -6,7 +6,7 @@ public class TickHeaderFormat {
     public static final String CSV_SEPARATOR = "[,\t]";
 
     private int W = -1, A = -1, S = -1, D = -1, P = -1, N = -1, J = -1,
-            YAW = -1, PITCH = -1, L = -1, R = -1, SLOT = -1, COUNT = -1;
+            YAW = -1, PITCH = -1, L = -1, R = -1, COUNT = -1;
 
     public TickHeaderFormat(String header) {
         String[] cols = header.split(CSV_SEPARATOR);
@@ -24,13 +24,12 @@ public class TickHeaderFormat {
             else if (col.equals("PITCH")) PITCH = i;
             else if (col.equals("L")) L = i;
             else if (col.equals("R")) R = i;
-            else if (col.equals("SLOT")) SLOT = i;
             else if (col.equals("COUNT")) COUNT = i;
         }
     }
 
     public static String getCSVHeader() {
-        return "W,A,S,D,P,N,J,YAW,PITCH,L,R,SLOT,COUNT";
+        return "W,A,S,D,P,N,J,YAW,PITCH,L,R,COUNT";
     }
 
     public boolean getW(String[] row) {
@@ -75,10 +74,6 @@ public class TickHeaderFormat {
 
     public int getR(String[] row) {
         return R == -1 ? 0 : MathUtil.parseInt(row[R], 0);
-    }
-
-    public int getSlot(String[] row) {
-        return SLOT == -1 ? 0 : MathUtil.parseInt(row[SLOT], 0);
     }
 
     public int getCount(String[] row) {

@@ -95,7 +95,7 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
             TickInput in = tick.item.tickInput;
             tick.item.tickInput = new TickInput(in.getKeyInputs(),
                     in.getL(), in.getR(),
-                    angle == null ? in.getYaw() : angle, in.getPitch(), in.getSlot(), in.getCount());
+                    angle == null ? in.getYaw() : angle, in.getPitch(), in.getCount());
         });
         inputDiv.addChild(yaw, PERCENT.X, Anchor.TOP_LEFT);
         InputField pitch = new InputField(String.valueOf(tick.item.tickInput.getPitch()),
@@ -109,7 +109,7 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
             TickInput in = tick.item.tickInput;
             tick.item.tickInput = new TickInput(in.getKeyInputs(),
                     in.getL(), in.getR(),
-                    in.getYaw(), angle == null ? in.getPitch() : angle, in.getSlot(), in.getCount());
+                    in.getYaw(), angle == null ? in.getPitch() : angle, in.getCount());
         });
         inputDiv.addChild(pitch, PERCENT.X, Anchor.BOTTOM_LEFT);
 
@@ -124,7 +124,7 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
             TickInput in = tick.item.tickInput;
             tick.item.tickInput = new TickInput(in.getKeyInputs(),
                     count == null ? in.getL() : count, in.getR(),
-                    in.getYaw(), in.getPitch(), in.getSlot(), in.getCount());
+                    in.getYaw(), in.getPitch(), in.getCount());
         });
         inputDiv.addChild(L, PERCENT.X, Anchor.TOP_LEFT);
 
@@ -139,28 +139,12 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
             TickInput in = tick.item.tickInput;
             tick.item.tickInput = new TickInput(in.getKeyInputs(),
                     in.getL(), count == null ? in.getR() : count,
-                    in.getYaw(), in.getPitch(), in.getSlot(), in.getCount());
+                    in.getYaw(), in.getPitch(), in.getCount());
         });
         inputDiv.addChild(R, PERCENT.X, Anchor.BOTTOM_LEFT);
 
-        InputField slotField = new InputField(String.valueOf(tick.item.tickInput.getSlot()),
-                new Vector2D(2 / 3D, 0),
-                1 / 3D);
-        slotField.setFilter("[0-9]");
-        slotField.setOnContentChange(content -> {
-            Integer slot = MathUtil.parseInt(content.getContent(), null);
-            if (slot != null && slot >= 9) slot = null;
-            slotField.edgeColor = slot == null ? Theme.warnText : Theme.lightEdge;
-
-            TickInput in = tick.item.tickInput;
-            tick.item.tickInput = new TickInput(in.getKeyInputs(),
-                    in.getL(), in.getR(),
-                    in.getYaw(), in.getPitch(), slot == null ? in.getSlot() : slot, in.getCount());
-        });
-        inputDiv.addChild(slotField, PERCENT.X, Anchor.TOP_LEFT);
-
         InputField countField = new InputField(String.valueOf(tick.item.tickInput.getCount()),
-                new Vector2D(2 / 3D, 11),
+                new Vector2D(2 / 3D, 0),
                 1 / 3D);
         countField.setFilter("[0-9]");
         countField.setOnContentChange(content -> {
@@ -171,9 +155,9 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
             TickInput in = tick.item.tickInput;
             tick.item.tickInput = new TickInput(in.getKeyInputs(),
                     in.getL(), in.getR(),
-                    in.getYaw(), in.getPitch(), in.getSlot(), count == null ? in.getCount() : count);
+                    in.getYaw(), in.getPitch(), count == null ? in.getCount() : count);
         });
-        inputDiv.addChild(countField, PERCENT.X, Anchor.TOP_LEFT);
+        inputDiv.addChild(countField, PERCENT.X, Anchor.CENTER_LEFT);
     }
 
     private void createEditComponents() {
@@ -241,7 +225,7 @@ public class MacroTick extends ScrollableListItem<MacroTick> {
         int inputs = in.getKeyInputs() & ~flag;
         if (!prev) inputs |= flag;
         tick.item.tickInput = new TickInput(inputs,
-                in.getL(), in.getR(), in.getYaw(), in.getPitch(), in.getSlot(), in.getCount());
+                in.getL(), in.getR(), in.getYaw(), in.getPitch(), in.getCount());
     }
 
     public void setNode(LinkedList<MacroTick>.Node node) {

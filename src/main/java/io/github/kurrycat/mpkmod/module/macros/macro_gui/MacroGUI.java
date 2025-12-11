@@ -69,9 +69,4 @@ public class MacroGUI extends ComponentScreen {
         super.onGuiClosed();
         macroTickList.save();
     }
-
-    @Override
-    public void render(Vector2D mouse, float partialTicks) {
-        super.render(mouse, partialTicks);
-    }
 }

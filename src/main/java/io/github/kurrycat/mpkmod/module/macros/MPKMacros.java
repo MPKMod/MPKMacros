@@ -1,13 +1,11 @@
 package io.github.kurrycat.mpkmod.module.macros;
 
 import io.github.kurrycat.mpkmod.compatibility.API;
-import io.github.kurrycat.mpkmod.compatibility.MCClasses.FontRenderer;
-import io.github.kurrycat.mpkmod.compatibility.MCClasses.InputConstants;
-import io.github.kurrycat.mpkmod.compatibility.MCClasses.Keyboard;
-import io.github.kurrycat.mpkmod.compatibility.MCClasses.Renderer2D;
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.*;
 import io.github.kurrycat.mpkmod.events.Event;
 import io.github.kurrycat.mpkmod.events.EventAPI;
 import io.github.kurrycat.mpkmod.events.OnRenderOverlayEvent;
+import io.github.kurrycat.mpkmod.events.OnRenderWorldOverlayEvent;
 import io.github.kurrycat.mpkmod.module.macros.macro_gui.MacroGUI;
 import io.github.kurrycat.mpkmod.module.macros.util.FileUtil;
 import io.github.kurrycat.mpkmod.modules.MPKModule;
@@ -68,6 +66,22 @@ public class MPKMacros implements MPKModule {
                     );
                 },
                 Event.EventType.RENDER_OVERLAY
+        ));
+
+        EventAPI.addListener(new EventAPI.EventListener<OnRenderWorldOverlayEvent>(
+                e -> {
+                    if (currentMacro == null) return;
+                    float t = e.partialTicks;
+
+                    float lerpedYaw = currentMacro.getLerpedYaw(t);
+                    float lerpedPitch = currentMacro.getLerpedPitch(t);
+
+                    int pressedInputs = currentMacro.getInput().getKeyInputs();
+
+                    // TODO: Add a proper way to modify inputs individually in MPK2
+                    Minecraft.setInputs(lerpedYaw, false, lerpedPitch, false, pressedInputs, ~pressedInputs, 0, 0);
+                },
+                Event.EventType.RENDER_WORLD_OVERLAY
         ));
     }
 }

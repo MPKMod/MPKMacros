@@ -104,6 +104,20 @@ public class Macro extends LinkedList<Macro.Tick> {
         public void stop() {
             Minecraft.setInputs(new TickInput());
         }
+
+        public TickInput getInput() {
+            return curr.tickInput;
+        }
+
+        public float getLerpedYaw(float t) {
+            if (curr == null) return lastYaw;
+            return lastYaw + t*(newYaw - lastYaw);
+        }
+
+        public float getLerpedPitch(float t) {
+            if (curr == null) return lastPitch;
+            return lastPitch + t*(newPitch - lastPitch);
+        }
     }
 
     public void save() {

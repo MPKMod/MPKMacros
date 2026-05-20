@@ -61,42 +61,43 @@ public class Macro extends LinkedList<Macro.Tick> {
     }
 
     public class Runner {
-        private final It it;
-        private int count;
+        private final TickScheduler tickScheduler;
+
         private Tick curr;
-        private float savedYaw;
-        private float savedPitch;
+
+        private float lastYaw;
+        private float lastPitch;
+        private float newYaw;
+        private float newPitch;
 
         public Runner() {
-            it = iterator();
-            if (it.hasNext()) {
-                curr = it.next();
-                count = curr.tickInput.getCount();
-            }
+            tickScheduler = new TickScheduler(iterator());
+
+            curr = tickScheduler.nextTick();
 
             Player player = Player.getLatest();
-            savedYaw = player.getTrueYaw();
-            savedPitch = player.getTruePitch();
+            lastYaw = player.getTrueYaw();
+            lastPitch = player.getTruePitch();
+            newYaw = lastYaw + curr.tickInput.getYaw();
+            newPitch = lastPitch + curr.tickInput.getPitch();
         }
 
         public boolean tick() {
-            if (curr == null) return false;
-            while (count == 0) {
-                if (!it.hasNext()) return false;
-
-                curr = it.next();
-                count = curr.tickInput.getCount();
-            }
-
-            savedYaw += curr.tickInput.getYaw();
-            savedPitch += curr.tickInput.getPitch();
-
             Minecraft.setInputs(
-                    savedYaw, false, savedPitch, false,
+                    newYaw, false, newPitch, false,
                     curr.tickInput.getKeyInputs(), ~curr.tickInput.getKeyInputs(),
                     curr.tickInput.getL(), curr.tickInput.getR()
             );
-            count--;
+
+            curr = tickScheduler.nextTick();
+            if (curr == null) return false;
+
+            lastYaw = newYaw;
+            lastPitch = newPitch;
+
+            newYaw += curr.tickInput.getYaw();
+            newPitch += curr.tickInput.getPitch();
+
             return true;
         }
 

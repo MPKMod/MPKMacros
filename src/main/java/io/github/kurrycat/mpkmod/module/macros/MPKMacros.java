@@ -1,20 +1,27 @@
 package io.github.kurrycat.mpkmod.module.macros;
 
+import io.github.kurrycat.mpkmod.Main;
 import io.github.kurrycat.mpkmod.compatibility.API;
 import io.github.kurrycat.mpkmod.compatibility.MCClasses.*;
 import io.github.kurrycat.mpkmod.events.Event;
 import io.github.kurrycat.mpkmod.events.EventAPI;
 import io.github.kurrycat.mpkmod.events.OnRenderOverlayEvent;
 import io.github.kurrycat.mpkmod.events.OnRenderWorldOverlayEvent;
+import io.github.kurrycat.mpkmod.gui.infovars.InfoString;
+import io.github.kurrycat.mpkmod.gui.screens.options_gui.Option;
 import io.github.kurrycat.mpkmod.module.macros.macro_gui.MacroGUI;
 import io.github.kurrycat.mpkmod.module.macros.util.FileUtil;
 import io.github.kurrycat.mpkmod.modules.MPKModule;
+import io.github.kurrycat.mpkmod.util.ClassUtil;
 import io.github.kurrycat.mpkmod.util.Vector2D;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 
 public class MPKMacros implements MPKModule {
@@ -24,7 +31,19 @@ public class MPKMacros implements MPKModule {
     public static Macro.Runner currentMacro = null;
     public static MacroGUI macroGUI = new MacroGUI();
 
+    @Option.Field(
+            category = "mpkmacros",
+            displayName = "Enable smooth camera",
+            description = "When enabled, macro turns will progress smoothly throughout the tick instead of snapping instantly"
+    )
+    public static boolean smoothCameraEnabled = true;
+
     public void init() {
+        addClassesToClassesTxt(new Class[] {
+                MPKMacros.class
+        });
+        API.optionsMap = Option.createOptionMap();
+
         API.registerGUIScreen("macro_gui", macroGUI);
     }
 
@@ -70,7 +89,7 @@ public class MPKMacros implements MPKModule {
 
         EventAPI.addListener(new EventAPI.EventListener<OnRenderWorldOverlayEvent>(
                 e -> {
-                    if (currentMacro == null) return;
+                    if (!smoothCameraEnabled || currentMacro == null) return;
                     float t = e.partialTicks;
 
                     float lerpedYaw = currentMacro.getLerpedYaw(t);
@@ -83,5 +102,18 @@ public class MPKMacros implements MPKModule {
                 },
                 Event.EventType.RENDER_WORLD_OVERLAY
         ));
+    }
+
+    private void addClassesToClassesTxt(Class<?>[] classes) {
+        try {
+            Field classesField = ClassUtil.class.getDeclaredField("classes");
+            classesField.setAccessible(true);
+
+            @SuppressWarnings("unchecked")
+            final Set<Class<?>> classesTxt = (Set<Class<?>>) classesField.get(null);
+            classesTxt.addAll(Arrays.asList(classes));
+
+            Main.infoTree = InfoString.createInfoTree();
+        } catch (ReflectiveOperationException e) { e.printStackTrace(); }
     }
 }

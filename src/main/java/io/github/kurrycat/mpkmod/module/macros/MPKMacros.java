@@ -1,15 +1,14 @@
 package io.github.kurrycat.mpkmod.module.macros;
 
 import io.github.kurrycat.mpkmod.compatibility.API;
-import io.github.kurrycat.mpkmod.compatibility.MCClasses.FontRenderer;
-import io.github.kurrycat.mpkmod.compatibility.MCClasses.InputConstants;
-import io.github.kurrycat.mpkmod.compatibility.MCClasses.Keyboard;
-import io.github.kurrycat.mpkmod.compatibility.MCClasses.Renderer2D;
+import io.github.kurrycat.mpkmod.compatibility.MCClasses.*;
 import io.github.kurrycat.mpkmod.events.Event;
 import io.github.kurrycat.mpkmod.events.EventAPI;
 import io.github.kurrycat.mpkmod.events.OnRenderOverlayEvent;
+import io.github.kurrycat.mpkmod.events.OnRenderWorldOverlayEvent;
 import io.github.kurrycat.mpkmod.module.macros.macro_gui.MacroGUI;
 import io.github.kurrycat.mpkmod.module.macros.util.FileUtil;
+import io.github.kurrycat.mpkmod.module.macros.util.OptionsUtil;
 import io.github.kurrycat.mpkmod.module.macros.util.MacroRecorder;
 import io.github.kurrycat.mpkmod.modules.MPKModule;
 import io.github.kurrycat.mpkmod.util.Vector2D;
@@ -17,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
+import java.lang.reflect.Field;
 import java.util.List;
 
 
@@ -27,7 +27,19 @@ public class MPKMacros implements MPKModule {
     public static Macro.Runner currentMacro = null;
     public static MacroGUI macroGUI = new MacroGUI();
 
+    public static boolean smoothCameraEnabled = true;
+
     public void init() {
+        try {
+            // This will need to change in MPK2 to properly detect annotations in module classes
+            Field smoothCameraField = MPKMacros.class.getDeclaredField("smoothCameraEnabled");
+            OptionsUtil.registerOption(
+                    smoothCameraField,
+                    "Enable macro smooth camera",
+                    "When enabled, macro turns will progress smoothly throughout the tick instead of snapping instantly"
+            );
+        } catch (NoSuchFieldException e) { throw new RuntimeException(e); }
+
         API.registerGUIScreen("macro_gui", macroGUI);
 
         // TODO: update api for proper names
@@ -95,6 +107,22 @@ public class MPKMacros implements MPKModule {
                     }
                 },
                 Event.EventType.RENDER_OVERLAY
+        ));
+
+        EventAPI.addListener(new EventAPI.EventListener<OnRenderWorldOverlayEvent>(
+                e -> {
+                    if (!smoothCameraEnabled || currentMacro == null) return;
+                    float t = e.partialTicks;
+
+                    float lerpedYaw = currentMacro.getLerpedYaw(t);
+                    float lerpedPitch = currentMacro.getLerpedPitch(t);
+
+                    int pressedInputs = currentMacro.getInput().getKeyInputs();
+
+                    // TODO: Add a proper way to modify inputs individually in MPK2
+                    Minecraft.setInputs(lerpedYaw, false, lerpedPitch, false, pressedInputs, ~pressedInputs, 0, 0);
+                },
+                Event.EventType.RENDER_WORLD_OVERLAY
         ));
     }
 }
